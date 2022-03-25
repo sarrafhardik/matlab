@@ -1,0 +1,261 @@
+Simplex
+
+
+
+clear all;
+clc;
+%% Phase1
+
+A=[2 1;2 3;3 1];
+B=[18;42;24];
+C=[3 2];
+n=size(A,1);
+m=size(A,2);
+temp=eye(n)
+mat=[A temp B]
+t=zeros(1,size(mat,2))
+t(1:m)=C
+
+%% Phase2
+
+bv=m+1:size(mat,2)-1
+zjcj=t(bv)*mat-t
+
+zc=zjcj(1:size(mat,2)-1)
+RUN= true;
+while RUN
+    if any(zc<0)
+
+
+        
+        [minval piv_col_ind]=min(zc)
+        pivot_col=mat(:,piv_col_ind)
+        if all(pivot_col<0)
+            disp('Unbounded Solution')
+        else
+            x = mat(:,end)./pivot_col   
+            for i=1:size(x,1)
+                
+                if(x(i)<0)
+                    x(i)=inf
+                end
+            end
+
+
+            [minratio pivot_row_ind]=min(x)
+        end
+        bv(pivot_row_ind)=piv_col_ind
+        pivot_key=mat(pivot_row_ind,piv_col_ind)
+        mat(pivot_row_ind,:)=mat(pivot_row_ind,:)./pivot_key
+        for j=1:n
+            if j~=pivot_row_ind
+                mat(j,:)=mat(j,:)-pivot_col(j).*mat(pivot_row_ind,:)
+            end
+        end
+        zjcj=t(bv)*mat-t
+        zc=zjcj(1:size(mat,2)-1)
+
+        table=array2table(mat)
+        table.Properties.VariableNames(1:size(mat,2))={'x_1','x_2','s_1','s_2','s_3','B'}
+    else
+        disp('Optimal Solution Reached')
+        RUN= false;
+    end
+end
+
+
+
+Graphical
+
+
+clear all;clc;
+A=[1 2;1 1;1 -2];
+B=[10;6;1];
+C=[1;2];
+
+y1=0:1:max(B)
+x11=(B(1)-A(1,2)*y1)/A(1,1);
+x21=(B(2)-A(2,2)*y1)/A(2,1);
+x31=(B(3)-A(3,2)*y1)/A(3,1);
+x11=max(0,x11)
+x21=max(0,x21);
+x31=max(0,x31);
+plot(y1,x11,"r",y1,x21,"b",y1,x31,"g")
+N=[];
+X=[];
+for i=1:size(A,1)
+    for j=i+1:size(A,1)
+        P=[A(i,:) ; A(j,:)]
+        Q=[B(i) ; B(j)]
+        X=inv(P)*Q
+        N=[N X]
+    end
+end
+%corner points with the axis
+cx1=find(y1==0)
+c1=find(x11==0)
+Line1=[y1(:,[c1 cx1]);x11(:,[c1,cx1])]'
+
+c2=find(x21==0)
+Line2=[y1(:,[c2 cx1]);x21(:,[c2 cx1])]'
+
+c3=find(x31==0)
+Line3=[y1(:,[c3 cx1]);x31(:,[c3 cx1])]'
+
+%all cornerpts
+cornerpts=unique([Line1;Line2;Line3],'rows')
+
+
+
+%check points in constraints and delete those which dont satisfy
+PT=constraint(cornerpts)
+x1=PT(:,1)
+x2=PT(:,2)
+eq=x1+2.*x2
+maxval=max(eq)
+P1=find(eq==maxval)
+result=PT(P1,:)
+
+function output=constraint(x)
+format rat
+x1=x(:,1)
+x2=x(:,2)
+cons1=round(x1+(2.*x2)-10)
+s1=find(cons1>0)
+x(s1,:)=[]
+x1=x(:,1)
+x2=x(:,2)
+cons2=round(x1+x2-6)
+s2=find(cons2>0)
+x(s2,:)=[]
+x1=x(:,1)
+x2=x(:,2)
+cons3=round(x1-(2.*x2)-1)
+s3=find(cons3>0)
+x(s3,:)=[]
+output=x
+end
+
+
+
+Big M
+
+clc;
+clear all;
+M=1000
+C=[3 2 0 0 -M 0]
+A=[2 1 1 0 0 2;
+    3 4 0 -1 1 12]
+
+
+m=size(A,1)
+n=size(A,2)
+I=eye(m)
+bv=[]
+for i=1:size(I,2)
+    for j=1:size(A,2)
+        if A(:,j)==I(:,i)
+            bv=[bv j]
+        end
+    end
+end
+zjcj=C(bv)*A-C
+run=true
+while run
+    zc=zjcj(1:size(A,2)-1)
+    if any(zc<0)
+        [minzc minzcindex]=min(zc)
+        pivot_col=A(:,minzcindex)
+        if all(pivot_col<0)
+            disp("Unbounded Solution")
+        else
+            x=A(:,end)./pivot_col
+            for i=1:size(x,1)
+                if(x(i)<0)
+                    x(i)=inf
+                end
+            end
+        end
+        [minratio minratio_index]=min(x)
+        bv(minratio_index)=minzcindex
+        pivot_key=A(minratio_index,minzcindex)
+        A(minratio_index,:)=A(minratio_index,:)./pivot_key
+        for j=1:m
+            if j~=minratio_index
+                A(j,:)=A(j,:)-pivot_col(j).*A(minratio_index,:)
+            end
+        end
+        zjcj=C(bv)*A-C
+        run=true
+        table=array2table(A)
+        table.Properties.VariableNames(1:size(A,2))={'x1','x2','s1','s2','A1','B'}
+    else
+        disp("Optimal Solution Reached")
+        bv
+        d(bv)=A(:,end)
+        run=false;
+    end
+end
+
+
+Two Phase
+
+clc;
+clear all;
+A=[3 -1 -1 -1 0 1 0 3;
+    1 -1 1 0 -1 0 1 2]
+I=eye(size(A,1))
+bv=[]
+for i=1:size(I,2)
+    for j=1:size(A,2)
+        if A(:,j)==I(:,i)
+            bv=[bv j]
+        end
+    end
+end
+C=[0 0 0 0 0 -1 -1 0]
+[A newbv]=General(A,bv,C)
+A(:,bv)=[] 
+C=[-7.5 3 0 0 0 0]
+[A newbv]=General(A,newbv,C)
+D(newbv)=A(:,end)
+optimalvalue=C(1)*D(1)+C(2)*D(2)
+
+
+function[A,newbv]=General(A,bv,C)
+zjcj=C(bv)*A-C
+run=true;
+while run
+    zc=zjcj(1:size(A,2)-1)
+    if any(zc<0)
+        [minzc minzcindex]=min(zc)
+        pivot_col=A(:,minzcindex)
+        if all(pivot_col<0)
+            disp("Unbounded Solution")
+        else
+            x=A(:,end)./pivot_col
+            for i=1:size(x,1)
+                if x(i)<0
+                    x(i)=inf
+                end
+            end
+
+            [minratio minratioindex]=min(x)
+        end
+        pivot_key=A(minratioindex,minzcindex)
+        bv(minratioindex)=minzcindex
+        A(minratioindex,:)=A(minratioindex,:)./pivot_key
+        for j=1:size(A,1)
+            if j~=minratioindex
+                A(j,:)=A(j,:)-pivot_col(j)*A(minratioindex,:)
+
+            end
+        end
+        zjcj=C(bv)*A-C
+    else
+        disp("Optiaml Solution reached")
+        run=false;
+        newbv=bv
+
+    end
+end
