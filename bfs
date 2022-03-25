@@ -1,0 +1,19 @@
+clc
+clear all
+  C=[2,3,4,7]
+  A=[2,3,-1,4;1,-2,6,-7]
+  B=[8;-3]
+  m=size(A,1)
+  n=size(A,2);
+  nCm = nchoosek(n,m)
+  pair = nchoosek(1:n,m)
+  sol=[];
+for i=1:nCm
+    y=zeros(n,1);
+    D=A(:,pair(i,:))\B;
+    if (D>=0)
+      y(pair(i,:)) = D;
+      sol=[sol y]
+    end 
+end
+z=C*sol
