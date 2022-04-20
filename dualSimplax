@@ -1,0 +1,45 @@
+format short
+clc
+clear all
+Var={'x_1','x_2','x3','x4','s_1','s_2','s3','sol'};
+cost=[-2 -3 -4 -5 0 0 0 0];
+a=[-1 1 -1 1 1 0 0 ; -1 2 -3 4 0 1 0;-3 4 -5 6 0 0 1];
+b=[-10;-6;-15];
+A=[a b];
+bv=[5 6 7];
+zjcj=cost(bv)*A-cost;
+simplex_table=[zjcj;A];
+array2table(simplex_table,'VariableNames',Var)
+
+for i=1:1:15
+    sol=A(:,end);
+    if all(sol>=0)
+        fprintf('The current solution is feasible and optimal\n');
+        break;
+    else
+        fprintf('The current solution is not feasible\n');
+ [leaving_val, pvt_row]=min(sol);
+ fprintf('Leaving row %d\n',pvt_row);
+for i=1:size(A,2)-1
+ if A(pvt_row,i)<0
+        ratio(i)=abs(zjcj(i)/A(pvt_row,i));
+ else
+        ratio(i)=inf;
+ end
+end
+[ent_val, pvt_col]=min(ratio);
+fprintf('Entering column %d\n',pvt_col);
+bv(pvt_row)=pvt_col;
+pvt_key=A(pvt_row, pvt_col);
+A(pvt_row,:)=A(pvt_row,:)/pvt_key;
+for i=1:size(A,1)
+ if i~=pvt_row
+ A(i,:)=A(i,:)-A(i,pvt_col).*A(pvt_row,:);
+ end
+end
+
+zjcj=zjcj-zjcj(pvt_col).*A(pvt_row,:);
+Table=[zjcj;A];
+ TABLE=array2table(Table,'VariableNames',Var)
+end
+end
